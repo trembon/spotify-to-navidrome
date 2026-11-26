@@ -13,6 +13,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      artifact-id: ${{ steps.plugin-zip.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -27,9 +29,33 @@ jobs:
       - name: Run the pinned-image integration test
         run: python3 tests/integration.py
       - name: Upload the tested ZIP
+        id: plugin-zip
         uses: actions/upload-artifact@v7
         with:
           name: Lidarr.Plugin.SpotifyNavidrome.net10.0
           path: .artifacts/Lidarr.Plugin.SpotifyNavidrome.net10.0.zip
           include-hidden-files: true
           if-no-files-found: error
+          overwrite: true
+
+  publish:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-lidarr-plugin
+      queue: max
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download the tested ZIP
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.test.outputs.artifact-id }}
+          path: .artifacts
+      - name: Publish the plugin release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/publish-release.py

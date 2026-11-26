@@ -37,3 +37,7 @@ python tests/integration.py
 ```
 
 The ZIP is written to `.artifacts/`. Run `python tests/integration.py --from-github` to exercise Lidarr's repository install path against the published release.
+
+## Release a new version
+
+Bump `<Version>` in `src/Plugin/Lidarr.Plugin.SpotifyNavidrome.csproj` and push or merge to `main`. After the tests pass, GitHub Actions creates the `v<version>` tag and publishes the tested ZIP to GitHub Releases. `<MinimumLidarrVersion>` in the same project supplies the minimum version in the release notes. Rerun the failed jobs from the original workflow run if publishing is interrupted.

@@ -30,6 +30,7 @@ PASSWORD = 'disposable-integration-test'
 ARTISTS = ['Fixture North', 'Fixture South', 'Fixture East']
 TITLES = ['Paper Harbor', 'Quiet Horizon', 'Open Trail', 'Blue Bridge']
 LISTS = ['A' * 22, 'B' * 22, 'C' * 22]
+PLUGIN_FILES = {'Lidarr.Plugin.SpotifyNavidrome.dll', 'Lidarr.Plugin.SpotifyNavidrome.deps.json'}
 TRACKS = ['D' * 22, 'E' * 22, 'F' * 22, 'G' * 22]
 ARTIST_FOR_TRACK = [0, 0, 1, 2]
 
@@ -178,8 +179,7 @@ def run_integration(work, archive, from_github):
     if not from_github:
         plugins.mkdir(parents=True)
         with ZipFile(archive) as package:
-            assert set(package.namelist()) == {'Lidarr.Plugin.SpotifyNavidrome.dll',
-                                               'Lidarr.Plugin.SpotifyNavidrome.deps.json'}
+            assert set(package.namelist()) == PLUGIN_FILES
             package.extractall(plugins)
 
     docker('network', 'create', network, capture=True)
@@ -220,6 +220,11 @@ def run_integration(work, archive, from_github):
         assert schema['shouldMonitor'] == 'entireArtist', schema['shouldMonitor']
         assert schema['minRefreshInterval'] == '06:00:00', schema['minRefreshInterval']
         assert any(plugin['name'] == 'spotify-to-navidrome' for plugin in lid('/api/v1/system/plugins'))
+        if from_github and archive is not None:
+            with ZipFile(archive) as package:
+                for name in PLUGIN_FILES:
+                    assert (plugins / name).read_bytes() == package.read(name), f'Installed {name} differs from the tested ZIP'
+            print('Verified that Lidarr installed the files from the tested ZIP.', flush=True)
         print('Loaded the plugin and verified the provider defaults.', flush=True)
 
         config = lid('/api/v1/config/metadataprovider')
@@ -337,8 +342,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--serve', action='store_true')
     parser.add_argument('--from-github', action='store_true')
-    parser.add_argument('--archive', type=Path, default=Path('.artifacts/Lidarr.Plugin.SpotifyNavidrome.net10.0.zip'))
+    parser.add_argument('--archive', type=Path, help='Install this ZIP locally or compare it with the GitHub install.')
     args = parser.parse_args()
+    if not args.from_github and args.archive is None:
+        args.archive = Path('.artifacts/Lidarr.Plugin.SpotifyNavidrome.net10.0.zip')
     if args.serve:
         serve_fixtures()
     else:
