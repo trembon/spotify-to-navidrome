@@ -1,0 +1,35 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+          dotnet-version: '10.0.x'
+      - name: Run core tests
+        run: dotnet run --project tests/Core.Tests/SpotifyNavidrome.Tests.csproj -c Release
+      - name: Build the plugin ZIP
+        shell: pwsh
+        run: ./scripts/build.ps1
+      - name: Run the pinned-image integration test
+        run: python3 tests/integration.py
+      - name: Upload the tested ZIP
+        uses: actions/upload-artifact@v7
+        with:
+          name: Lidarr.Plugin.SpotifyNavidrome.net10.0
+          path: .artifacts/Lidarr.Plugin.SpotifyNavidrome.net10.0.zip
+          include-hidden-files: true
+          if-no-files-found: error
