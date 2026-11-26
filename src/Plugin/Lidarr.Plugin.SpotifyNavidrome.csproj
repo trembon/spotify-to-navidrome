@@ -4,12 +4,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <LidarrBin Condition="'$(LidarrBin)' == ''">$(MSBuildProjectDirectory)/../../.artifacts/lidarr</LidarrBin>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../Core/SpotifyNavidrome.Core.csproj" />
+    <!-- Keep plugin types in one assembly so Lidarr can reflect over them without loading a private DLL. -->
+    <Compile Include="../Core/*.cs" Link="Core/%(Filename)%(Extension)" />
     <Reference Include="Lidarr.Core" HintPath="$(LidarrBin)/Lidarr.Core.dll" Private="false" />
     <Reference Include="Lidarr.Common" HintPath="$(LidarrBin)/Lidarr.Common.dll" Private="false" />
     <Reference Include="FluentValidation" HintPath="$(LidarrBin)/FluentValidation.dll" Private="false" />

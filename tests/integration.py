@@ -179,7 +179,7 @@ def run_integration(work, archive, from_github):
         plugins.mkdir(parents=True)
         with ZipFile(archive) as package:
             assert set(package.namelist()) == {'Lidarr.Plugin.SpotifyNavidrome.dll',
-                                               'Lidarr.Plugin.SpotifyNavidrome.deps.json', 'SpotifyNavidrome.Core.dll'}
+                                               'Lidarr.Plugin.SpotifyNavidrome.deps.json'}
             package.extractall(plugins)
 
     docker('network', 'create', network, capture=True)
@@ -195,6 +195,11 @@ def run_integration(work, archive, from_github):
         lid = functools.partial(api, server_url(lidarr, 8686), {'X-Api-Key': key})
         nav_url = server_url(nav, 4533)
         nav_api = functools.partial(api, nav_url, {})
+
+        def provider_schema():
+            return next((item for item in lid('/api/v1/importlist/schema')
+                         if item.get('implementation') == 'SpotifyNavidromeImportList'), None)
+
         status = wait_for(lambda: lid('/api/v1/system/status'), 'pinned Lidarr startup')
         assert status['version'] == '4.0.0.5236', status['version']
         assert status['runtimeVersion'] == '10.0.15', status['runtimeVersion']
@@ -206,14 +211,12 @@ def run_integration(work, archive, from_github):
         if from_github:
             lid('/api/v1/command', dict(name='InstallPlugin', githubUrl=REPOSITORY))
             wait_for(lambda: (plugins / 'Lidarr.Plugin.SpotifyNavidrome.dll').exists(), 'GitHub release download')
+        else:
+            wait_for(provider_schema, 'plugin registration on cold start')
         docker('restart', lidarr, capture=True)
         lid = functools.partial(api, server_url(lidarr, 8686), {'X-Api-Key': key})
 
-        def provider_schema():
-            return next((item for item in lid('/api/v1/importlist/schema')
-                         if item.get('implementation') == 'SpotifyNavidromeImportList'), None)
-
-        schema = wait_for(provider_schema, 'plugin registration')
+        schema = wait_for(provider_schema, 'plugin registration after restart')
         assert schema['shouldMonitor'] == 'entireArtist', schema['shouldMonitor']
         assert schema['minRefreshInterval'] == '06:00:00', schema['minRefreshInterval']
         assert any(plugin['name'] == 'spotify-to-navidrome' for plugin in lid('/api/v1/system/plugins'))

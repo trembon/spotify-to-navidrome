@@ -111,7 +111,7 @@ public sealed class SpotifyNavidromeImportList(
     private static string DownloadSpotify(Uri address)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, address);
-        request.Headers.UserAgent.ParseAdd("spotify-to-navidrome/0.1.0");
+        request.Headers.UserAgent.ParseAdd("spotify-to-navidrome/0.1.1");
         request.Headers.Accept.ParseAdd("text/html");
         request.Headers.AcceptLanguage.ParseAdd("en-US");
         using var response = Http.Send(request);

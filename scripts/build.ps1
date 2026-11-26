@@ -20,7 +20,7 @@ if (!$SkipExtract) {
 
 $publish = Join-Path $artifacts 'publish'
 dotnet publish (Join-Path $root "src/Plugin/$assembly.csproj") -c Release -o $publish
-$files = @("$assembly.dll", "$assembly.deps.json", 'SpotifyNavidrome.Core.dll') |
+$files = @("$assembly.dll", "$assembly.deps.json") |
     ForEach-Object { Join-Path $publish $_ }
 $archive = Join-Path $artifacts "$assembly.net10.0.zip"
 Compress-Archive -LiteralPath $files -DestinationPath $archive -Force

@@ -19,6 +19,8 @@ A Lidarr import list that reads public Spotify playlist pages, sends artists or 
 
 ## Playlists and troubleshooting
 
+- If Lidarr exits during startup with `SpotifyNavidrome.Core` and `AssemblyLoadContext is unloading`, stop Lidarr and move `/config/plugins/trembon/spotify-to-navidrome` outside `/config/plugins`. Extract the v0.1.1 or later plugin ZIP into the original plugin path before starting Lidarr. Lidarr can delete saved import lists during startup if their plugin is missing.
+
 - Synced playlists are public to Navidrome users by default and start with `[Spotify] `. Each playlist contains confident matches in Spotify order, including repeated tracks. Its comment links to Spotify and reports availability and the last successful sync time. Newly downloaded tracks can match after Navidrome indexes them and Lidarr refreshes the list.
 - **System → Status** shows Spotify read failures, Navidrome failures, unresolved albums, and missing tracks. Turn off **Warn About Missing Tracks** on a list to suppress its missing-track warning. Source failures and zero matches preserve any existing Navidrome tracks. Removing a source from the import list leaves its playlist in Navidrome.
 - The embeds sampled returned at most 100 rows. When an embed includes 100 or more rows, the plugin checks the total from the public playlist page. It skips the refresh if the counts disagree or the total is unavailable. Personalized mixes and playlists without a readable logged-out page are outside this release's scope. Spotify's published user guidelines prohibit scraping. [Spotify User Guidelines](https://www.spotify.com/se/legal/user-guidelines/)
